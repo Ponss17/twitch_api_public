@@ -1,13 +1,16 @@
 from flask import Response, url_for
+from .config import NOMBRE, TAG, REGION
 
 
 def valorant_index():
-    # Pre-build Nightbot commands - Construir comandos de Nightbot
+    # Pre-build Nightbot commands with explicit parameters - Construir comandos con parámetros explícitos
     rango_url = url_for('valorant.rango', _external=True)
     ultima_url = url_for('valorant.ultima_ranked', _external=True)
     
-    cmd_rango = f"$(urlfetch {rango_url})"
-    cmd_ultima = f"$(urlfetch {ultima_url})"
+    # Add explicit params to the URL for confidence - Añadir parámetros explícitos para seguridad
+    player_params = f"name={NOMBRE}&tag={TAG}&region={REGION}"
+    cmd_rango = f"$(urlfetch {rango_url}?{player_params})"
+    cmd_ultima = f"$(urlfetch {ultima_url}?{player_params})"
 
     html = f"""
 <!doctype html>
@@ -46,7 +49,7 @@ def valorant_index():
           <svg viewBox="0 0 100 100"><path d="M99.15 24c-5.05-5.05-14.54-5.05-19.59 0L49.99 53.58 20.44 24c-5.05-5.05-14.54-5.05-19.59 0-5.05 5.05-5.05 14.54 0 19.59L49.99 93.18l49.16-49.59c5.05-5.05 5.05-14.54 0-19.59z"/></svg>
         </div>
         <h1>Valorant</h1>
-        <p>Tus comandos listos para Nightbot.</p>
+        <p>Comandos configurados para {NOMBRE}#{TAG}.</p>
         
         <div class="commands-list">
           <div class="cmd-item">
@@ -67,7 +70,7 @@ def valorant_index():
         
         <div class="status-box">
           <div class="dot"></div>
-          <span>API de Valorant Activa</span>
+          <span>Región: {REGION.upper()} | Jugador: {NOMBRE}</span>
         </div>
       </div>
       

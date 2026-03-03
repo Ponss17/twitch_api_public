@@ -1,14 +1,16 @@
 from flask import Response, request, url_for
-from .config import USER_ACCESS_TOKEN
+from .config import CHANNEL_LOGIN, USER_ACCESS_TOKEN
 
 
 def twitch_index():
-    # Pre-build Nightbot commands - Construir comandos de Nightbot
+    # Pre-build Nightbot commands with explicit channel - Comandos con canal explícito
     base_url = url_for('twitch.status', _external=True).replace('/status', '')
     redirect_uri = url_for('twitch.oauth_callback', _external=True)
     
-    cmd_follow = f"$(urlfetch {base_url}/followage?user=$(touser))"
-    cmd_clip = f"$(urlfetch {base_url}/clip)"
+    # Use explicit channel param for user confidence - Usar parámetro de canal explícito
+    current_channel = CHANNEL_LOGIN or "TU_CANAL"
+    cmd_follow = f"$(urlfetch {base_url}/followage?user=$(touser)&channel={current_channel})"
+    cmd_clip = f"$(urlfetch {base_url}/clip?channel={current_channel})"
 
     is_connected = bool(USER_ACCESS_TOKEN)
 
@@ -54,7 +56,7 @@ def twitch_index():
           <svg viewBox="0 0 24 24"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
         </div>
         <h1>Twitch</h1>
-        <p>Copia los comandos para tu bot de chat.</p>
+        <p>Configurado para el canal: <b>{current_channel}</b></p>
         
         <div class="commands-list">
           <div class="cmd-item">
@@ -74,7 +76,7 @@ def twitch_index():
         </div>
 
         <div class="setup-guide">
-          <h4>Vercel/Twitch Dev URI:</h4>
+          <h4>Vercel Redirect URI:</h4>
           <div class="copy-row">
             <code id="redirUri">{redirect_uri}</code>
             <button class="btn-copy" onclick="copy('redirUri')">Copiar</button>

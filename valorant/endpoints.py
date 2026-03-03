@@ -33,19 +33,20 @@ def _format_delta(delta, lang='es'):
         return "no cambiaron mis puntos"
 
 # --- Routes ---
-@valorant_bp.route('/rango')
-def rango():
-    lang = request.args.get("lang", "es").lower()
+    nombre = request.args.get("name", NOMBRE)
+    tag = request.args.get("tag", TAG)
+    region = request.args.get("region", REGION)
+
     if not (API_KEY or "").strip():
         return text_response("API_KEY vacía.", 500)
 
-    cache_key = f"rango:{REGION}:{NOMBRE}:{TAG}:{lang}"
+    cache_key = f"rango:{region}:{nombre}:{tag}:{lang}"
     cached = _cache.get(cache_key)
     if cached: return text_response(cached)
 
     try:
         # API request - Petitorio de datos
-        url = f"https://api.henrikdev.xyz/valorant/v2/mmr/{REGION}/{_quoted(NOMBRE)}/{_quoted(TAG)}?api_key={API_KEY}"
+        url = f"https://api.henrikdev.xyz/valorant/v2/mmr/{region}/{_quoted(nombre)}/{_quoted(tag)}?api_key={API_KEY}"
         res = _session.get(url, timeout=10)
         res.raise_for_status()
         data = res.json().get('data', {}).get('current_data', {})
@@ -56,7 +57,7 @@ def rango():
         rango_display = Rangos_ES.get(rango_en, rango_en) if lang == 'es' else rango_en
         puntos = data.get('ranking_in_tier')
         delta = _format_delta(data.get('mmr_change_to_last_game'), lang)
-        agente = obtener_ultimo_agente()
+        agente = obtener_ultimo_agente(nombre, tag, region)
 
         if lang == 'en':
             respuesta = f"Rank: {rango_display} with {puntos} points. Last match was with {agente or 'someone'} and I {delta}."
@@ -81,24 +82,28 @@ def rango():
         msg = "Servicio de Valorant no disponible temporalmente." if lang == 'es' else "Valorant service temporarily unavailable."
         return text_response(msg, 502)
 
-def obtener_ultimo_agente():
+def obtener_ultimo_agente(nombre, tag, region):
     try:
-        url = f"https://api.henrikdev.xyz/valorant/v3/matches/{REGION}/{_quoted(NOMBRE)}/{_quoted(TAG)}?api_key={API_KEY}"
+        url = f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{_quoted(nombre)}/{_quoted(tag)}?api_key={API_KEY}"
         data = _session.get(url, timeout=10).json()
         if data.get('status') == 200 and data.get('data'):
             match = data['data'][0]
             for p in match.get('players', {}).get('all_players', []):
-                if p.get('name', '').lower() == NOMBRE.lower():
+                if p.get('name', '').lower() == nombre.lower():
                     return p.get('character')
     except: pass
     return None
 
 @valorant_bp.route('/ultima-ranked')
 def ultima_ranked():
+    nombre = request.args.get("name", NOMBRE)
+    tag = request.args.get("tag", TAG)
+    region = request.args.get("region", REGION)
     lang = request.args.get("lang", "es").lower()
+    
     try:
         # Match history - Historial de partidas
-        url = f"https://api.henrikdev.xyz/valorant/v3/matches/{REGION}/{_quoted(NOMBRE)}/{_quoted(TAG)}?api_key={API_KEY}"
+        url = f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{_quoted(nombre)}/{_quoted(tag)}?api_key={API_KEY}"
         data = _session.get(url, timeout=10).json()
 
         if data.get('status') != 200 or not data.get('data'):
@@ -110,7 +115,7 @@ def ultima_ranked():
                 mapa = meta.get('map')
                 
                 for p in match.get('players', {}).get('all_players', []):
-                    if p.get('name', '').lower() == NOMBRE.lower():
+                    if p.get('name', '').lower() == nombre.lower():
                         stats = p.get('stats', {})
                         k, d, a = stats.get('kills'), stats.get('deaths'), stats.get('assists')
                         team = p.get('team')
