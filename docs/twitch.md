@@ -31,7 +31,7 @@ Para que los endpoints de Twitch funcionen, necesitas registrar una aplicación 
 1. Ve a la [Consola de Desarrolladores de Twitch](https://dev.twitch.tv/console).
 2. Haz clic en **Register Your Application**.
 3. **Nombre:** Pon un nombre a tu app (ej: "Mi Bot de Stats").
-4. **OAuth Redirect URLs:** Añade `https://tu-api.vercel.app/oauth/callback`. (Si pruebas en local, usa `http://localhost:5000/oauth/callback`).
+4. **OAuth Redirect URLs:** Añade `https://tu-api.vercel.app/twitch/callback`. (Si pruebas en local, usa `http://localhost:5000/twitch/callback`).
 5. **Categoría:** Elige "Application Integration".
 6. Haz clic en **Create**.
 

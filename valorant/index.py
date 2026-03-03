@@ -2,52 +2,91 @@ from flask import Response, url_for
 
 
 def valorant_index():
-    rango_url = url_for('rango', _external=True)
-    ultima_url = url_for('ultima_ranked', _external=True)
+    # Pre-build Nightbot commands - Construir comandos de Nightbot
+    rango_url = url_for('valorant.rango', _external=True)
+    ultima_url = url_for('valorant.ultima_ranked', _external=True)
+    
+    cmd_rango = f"$(urlfetch {rango_url})"
+    cmd_ultima = f"$(urlfetch {ultima_url})"
+
     html = f"""
 <!doctype html>
-<html>
+<html lang="es">
   <head>
-    <meta charset=\"utf-8\">
-    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
-    <title>LosPerris Twitch Api Public | Valorant Endpoints</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Valorant | LosPerris</title>
     <style>
-      :root {{ --bg: #0e0f12; --card: #1c1f24; --border: #30343a; --text: #eaeaea; --muted: #a8b0bd; --accent: #ef4444; }}
-      * {{ box-sizing: border-box; }}
-      body {{ margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; padding: 24px; }}
-      .card {{ width: 100%; max-width: 860px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); padding: 24px; }}
-      h1 {{ margin: 0 0 12px; font-size: 28px; }}
-      p {{ margin: 8px 0; color: var(--muted); }}
-      .grid {{ display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }}
-      @media (min-width: 720px) {{ .grid {{ grid-template-columns: 1fr 1fr; }} }}
-      .item {{ background: #10151b; border: 1px solid #1f2530; border-radius: 12px; padding: 16px; }}
-      .title {{ font-weight: 700; margin-bottom: 6px; }}
-      a.btn {{ display: inline-block; text-decoration: none; background: var(--accent); color: white; padding: 8px 12px; border-radius: 10px; font-weight: 600; }}
-      .row {{ display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }}
+      :root {{ --bg: #0e1117; --card: #161b22; --brd: #30363d; --txt: #c9d1d9; --acc: #fa4454; --ok: #238636; }}
+      body {{ margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--txt); font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; padding: 10px; }}
+      .app-container {{ width: 100%; max-width: 440px; text-align: center; }}
+      .card {{ background: var(--card); border: 1px solid var(--brd); border-radius: 16px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }}
+      .logo-icon {{ width: 50px; height: 50px; background: #fa4454; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }}
+      .logo-icon svg {{ width: 30px; height: 30px; fill: white; }}
+      h1 {{ margin: 0 0 5px; font-size: 20px; color: white; }}
+      p {{ color: #8b949e; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem; }}
+      .commands-list {{ margin-top: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--brd); }}
+      .commands-list h3 {{ font-size: 0.95rem; margin: 0 0 12px; color: white; }}
+      .cmd-item {{ margin-bottom: 12px; }}
+      .cmd-item:last-child {{ margin-bottom: 0; }}
+      .cmd-item span {{ display: block; color: #8b949e; margin-bottom: 5px; font-weight: 600; font-size: 0.75rem; }}
+      .copy-row {{ display: flex; gap: 6px; }}
+      code {{ flex-grow: 1; background: #000; color: #fa4454; padding: 8px; border-radius: 6px; font-size: 0.75rem; word-break: break-all; border: 1px solid #333; }}
+      .btn-copy {{ background: #30363d; border: 1px solid var(--brd); color: white; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }}
+      .status-box {{ margin-top: 20px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.1); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; }}
+      .dot {{ width: 6px; height: 6px; border-radius: 50%; background: #238636; box-shadow: 0 0 8px #238636; }}
+      .links {{ margin-top: 15px; font-size: 0.8rem; }}
+      .links a {{ color: var(--acc); text-decoration: none; opacity: 0.8; }}
     </style>
   </head>
   <body>
-    <div class=\"card\">
-      <h1><img src=\"{url_for('static', filename='valorant/valorant_Icon_purple.webp')}\" alt=\"Valorant\" loading=\"lazy\" style=\"height:32px;width:auto;vertical-align:middle;margin-right:8px;border-radius:6px;\" />LosPerris Twitch Api Public - Valorant</h1>
-      <p>Listado de rutas disponibles y ejemplos de uso.</p>
-      <div class=\"grid\">
-        <div class=\"item\">
-          <div class=\"title\">Rango actual</div>
-          <p>Muestra el rango, puntos y cambio de MMR.</p>
-          <div class=\"row\">
-            <a class=\"btn\" href=\"{rango_url}\">Abrir /valorant/rango</a>
+    <div class="app-container">
+      <div class="card">
+        <div class="logo-icon">
+          <svg viewBox="0 0 100 100"><path d="M99.15 24c-5.05-5.05-14.54-5.05-19.59 0L49.99 53.58 20.44 24c-5.05-5.05-14.54-5.05-19.59 0-5.05 5.05-5.05 14.54 0 19.59L49.99 93.18l49.16-49.59c5.05-5.05 5.05-14.54 0-19.59z"/></svg>
+        </div>
+        <h1>Valorant</h1>
+        <p>Tus comandos listos para Nightbot.</p>
+        
+        <div class="commands-list">
+          <div class="cmd-item">
+            <span>Rango Actual:</span>
+            <div class="copy-row">
+              <code id="cmdRango">{cmd_rango}</code>
+              <button class="btn-copy" onclick="copy('cmdRango')">Copiar</button>
+            </div>
+          </div>
+          <div class="cmd-item">
+            <span>Última Ranked:</span>
+            <div class="copy-row">
+              <code id="cmdUltima">{cmd_ultima}</code>
+              <button class="btn-copy" onclick="copy('cmdUltima')">Copiar</button>
+            </div>
           </div>
         </div>
-
-        <div class=\"item\">
-          <div class=\"title\">Última ranked</div>
-          <p>Detalles de la última partida (mapa, agente, KDA, resultado).</p>
-          <div class=\"row\">
-            <a class=\"btn\" href=\"{ultima_url}\">Abrir /valorant/ultima-ranked</a>
-          </div>
+        
+        <div class="status-box">
+          <div class="dot"></div>
+          <span>API de Valorant Activa</span>
         </div>
       </div>
+      
+      <div class="links">
+        <a href="/">← Volver al Dashboard</a>
+      </div>
     </div>
+    <script>
+      function copy(id) {{
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => {{
+          const btn = event.target;
+          const original = btn.innerText;
+          btn.innerText = "¡OK!";
+          btn.style.background = "#238636";
+          setTimeout(() => {{ btn.innerText = original; btn.style.background = ""; }}, 1500);
+        }});
+      }}
+    </script>
   </body>
 </html>
     """

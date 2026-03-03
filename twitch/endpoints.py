@@ -2,6 +2,7 @@ from flask import Blueprint, request, Response, url_for
 from datetime import datetime, timezone
 import urllib.parse
 import requests
+import os
 import re
 import logging
 import time
@@ -154,20 +155,193 @@ def clip():
         logging.error(f"Error creating clip: {e}")
         return text_response("Error al crear el clip.", 500)
 
-@twitch_bp.route('/callback', methods=['GET', 'POST'])
-def oauth_callback():
-    # Implicit OAuth fragment capture - Captura de fragmento de OAuth
-    html = """
+@twitch_bp.route('/save-token', methods=['POST'])
+def save_token():
+    # Helper to save the token in the local .env file - Guardar el token en el .env local
+    data = request.get_json() or {}
+    token = data.get("token", "").strip()
+    if not token:
+        return text_response("Token vacío", 400)
+
+    env_path = os.path.join(os.getcwd(), '.env')
+    
+    try:
+        # Read current content - Leer contenido actual
+        lines = []
+        if os.path.exists(env_path):
+            with open(env_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        
+        # Update or add USER_ACCESS_TOKEN - Actualizar o añadir USER_ACCESS_TOKEN
+        found = False
+        new_lines = []
+        for line in lines:
+            if line.startswith("USER_ACCESS_TOKEN="):
+                new_lines.append(f"USER_ACCESS_TOKEN={token}\n")
+                found = True
+            else:
+                new_lines.append(line)
+        
+        if not found:
+            new_lines.append(f"USER_ACCESS_TOKEN={token}\n")
+            
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+            
+        return text_response("Token guardado correctamente en .env")
+    except Exception as e:
+        logging.error(f"Error saving token to .env: {e}")
+        return text_response(f"Error al guardar: {e}", 500)
+
+@twitch_bp.route('/login')
+def login():
+    # Helper to redirect to Twitch for OAuth - Redirigir a Twitch para OAuth
+    if not CLIENT_ID:
+        return text_response("Error: CLIENT_ID no configurado en .env", 500)
+    redirect_uri = url_for('twitch.oauth_callback', _external=True)
+    
+    scopes = "clips:edit+moderator:read:followers"
+    twitch_url = (
+        f"https://id.twitch.tv/oauth2/authorize"
+        f"?client_id={CLIENT_ID}"
+        f"&redirect_uri={urllib.parse.quote(redirect_uri)}"
+        f"&response_type=token"
+        f"&scope={scopes}"
+    )
+    
+    # Simple HTML to redirect - HTML simple para redirigir
+    html = f"""
     <!DOCTYPE html>
     <html>
+    <head><title>Twitch Login</title></head>
+    <body style="background:#0e0f12; color:#eaeaea; font-family:sans-serif; text-align:center; padding-top:50px;">
+        <p>Redirigiendo a Twitch para autorizar...</p>
+        <script>window.location.href = "{twitch_url}";</script>
+    </body>
+    </html>
+    """
+    return Response(html, mimetype="text/html")
+
+@twitch_bp.route('/callback', methods=['GET', 'POST'])
+def oauth_callback():
+    # Detect if we are running on Vercel - Detectar si estamos en Vercel
+    is_vercel = os.environ.get('VERCEL') == '1'
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <title>Conectando... | LosPerris</title>
+        <style>
+            body {{ background: #0e0f12; color: #eaeaea; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }}
+            .card {{ background: #1c1f24; border: 1px solid #30343a; padding: 40px; border-radius: 20px; text-align: center; width: 100%; max-width: 450px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }}
+            .spinner {{ width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #9146ff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }}
+            @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
+            h1 {{ font-size: 1.5rem; margin: 0 0 10px; color: #fff; }}
+            p {{ color: #a8b0bd; line-height: 1.5; margin: 0 0 20px; }}
+            .success-icon {{ font-size: 50px; color: #3fb950; margin-bottom: 20px; display: none; }}
+            .token-box {{ background: #000; border: 1px dashed #444; padding: 15px; border-radius: 10px; margin: 20px 0; display: none; text-align: left; }}
+            .token-box label {{ display: block; font-size: 0.8rem; color: #8b949e; margin-bottom: 5px; }}
+            code {{ display: block; word-break: break-all; color: #f59e0b; font-size: 0.85rem; background: #111; padding: 10px; border-radius: 6px; border: 1px solid #222; }}
+            .btn-action {{ display: inline-block; background: #9146ff; color: white; padding: 12px 24px; border-radius: 10px; text-decoration: none; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; }}
+            .btn-action:hover {{ filter: brightness(1.1); transform: translateY(-2px); }}
+            .step-guide {{ text-align: left; font-size: 0.9rem; margin-top: 20px; display: none; border-top: 1px solid #30343a; padding-top: 20px; }}
+            .step-guide ol {{ padding-left: 20px; color: #8b949e; }}
+            .step-guide li {{ margin-bottom: 8px; }}
+        </style>
+    </head>
     <body>
-        <h1>LosPerris Twitch Api Public - Auth</h1>
-        <p id="msg">Capturando token...</p>
+        <div class="card">
+            <div class="spinner" id="loader"></div>
+            <div class="success-icon" id="success">✓</div>
+            <h1 id="title">Conectando...</h1>
+            <p id="desc">Estamos procesando tu vinculación.</p>
+            
+            <div id="vercel-content" style="display:none;">
+                <div class="token-box">
+                    <label>Tu USER_ACCESS_TOKEN:</label>
+                    <code id="tokenText"></code>
+                </div>
+                <button class="btn-action" onclick="copyToken()">Copiar Token</button>
+                
+                <div class="step-guide">
+                    <p style="color:white; font-weight:600;">⚠️ Pasos para Vercel:</p>
+                    <ol>
+                        <li>Ve a tu proyecto en el panel de Vercel.</li>
+                        <li>Entra en <b>Settings</b> -> <b>Environment Variables</b>.</li>
+                        <li>Crea una variable llamada <code>USER_ACCESS_TOKEN</code>.</li>
+                        <li>Pega el token que acabas de copiar y guarda.</li>
+                    </ol>
+                    <a href="/" style="color:#9146ff; text-decoration:none; font-size:0.8rem;">← Volver al Inicio</a>
+                </div>
+            </div>
+
+            <div id="local-content" style="display:none;">
+                <a href="/" class="btn-action">Volver al Inicio</a>
+            </div>
+        </div>
+
         <script>
-            const hash = new URLSearchParams(window.location.hash.slice(1));
-            const token = hash.get('access_token');
-            if(token) document.getElementById('msg').innerHTML = "Tu token es: <br><code>" + token + "</code>";
-            else document.getElementById('msg').innerText = "No se encontró el token.";
+            const isVercel = {"true" if is_vercel else "false"};
+            const hashParams = new URLSearchParams(window.location.hash.slice(1));
+            const token = hashParams.get('access_token');
+
+            if(token) {{
+                if(isVercel) {{
+                    // Vercel flow: Show and guide - Flujo Vercel: Mostrar y guiar
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('success').style.display = 'block';
+                    document.getElementById('title').innerText = "¡Clave Obtenida!";
+                    document.getElementById('desc').innerText = "Como estás en Vercel, debes configurar esta clave manualmente en su panel.";
+                    document.getElementById('tokenText').innerText = token;
+                    document.getElementById('vercel-content').style.display = 'block';
+                    document.querySelector('.token-box').style.display = 'block';
+                    document.querySelector('.step-guide').style.display = 'block';
+                }} else {{
+                    // Local flow: Auto-save - Flujo Local: Auto-guardado
+                    fetch('/twitch/save-token', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify({{ token: token }})
+                    }}).then(r => {{
+                        if(r.ok) {{
+                            document.getElementById('loader').style.display = 'none';
+                            document.getElementById('success').style.display = 'block';
+                            document.getElementById('title').innerText = "¡Todo listo!";
+                            document.getElementById('desc').innerText = "Tu cuenta se ha vinculado y guardado automáticamente.";
+                            document.getElementById('local-content').style.display = 'block';
+                        }} else {{
+                            throw new Error();
+                        }}
+                    }}).catch(() => {{
+                        document.getElementById('loader').style.display = 'none';
+                        document.getElementById('title').innerText = "Error al guardar";
+                        document.getElementById('desc').innerText = "No pudimos escribir en tu archivo .env. Intenta copiar el token manualmente.";
+                        // Fallback to showing token if auto-save fails even in local
+                        document.getElementById('tokenText').innerText = token;
+                        document.getElementById('vercel-content').style.display = 'block';
+                    }});
+                }}
+            }} else {{
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('title').innerText = "Error";
+                document.getElementById('desc').innerText = "No se recibió el token de Twitch.";
+            }}
+
+            function copyToken() {{
+                const text = document.getElementById('tokenText').innerText;
+                navigator.clipboard.writeText(text).then(() => {{
+                    const btn = event.target;
+                    const original = btn.innerText;
+                    btn.innerText = "¡Copiado!";
+                    btn.style.background = "#238636";
+                    setTimeout(() => {{ 
+                        btn.innerText = original;
+                        btn.style.background = "";
+                    }}, 2000);
+                }});
+            }}
         </script>
     </body>
     </html>

@@ -19,8 +19,18 @@ def get_app_token():
         "client_secret": CLIENT_SECRET,
         "grant_type": "client_credentials",
     }
-    r = requests.post(url, data=data, timeout=10)
-    r.raise_for_status()
+    try:
+        r = requests.post(url, data=data, timeout=10)
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code
+        if status == 400:
+            raise RuntimeError("Error 400: CLIENT_ID o CLIENT_SECRET inválidos en .env")
+        if status == 403:
+            raise RuntimeError("Error 403: Credenciales denegadas por Twitch")
+        raise RuntimeError(f"Error {status} al conectar con Twitch: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Error inesperado al generar token: {e}")
     payload = r.json()
     APP_TOKEN = payload.get("access_token")
     expires_in = payload.get("expires_in", 0)
