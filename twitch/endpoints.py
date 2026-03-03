@@ -18,7 +18,7 @@ _session = get_session()
 _cache = SimpleTTLCache(default_ttl=15)
 
 # --- Helpers ---
-def _humanize_duration(delta_seconds: float) -> str:
+def _humanize_duration(delta_seconds: float, lang='es') -> str:
     minutes = int(delta_seconds // 60)
     hours = minutes // 60
     days = hours // 24
@@ -27,18 +27,35 @@ def _humanize_duration(delta_seconds: float) -> str:
     days_rem = (days % 365) % 30
 
     parts: list[str] = []
-    if years: parts.append(f"{years} años")
-    if months: parts.append(f"{months} meses")
-    if days_rem: parts.append(f"{days_rem} días")
+    if years:
+        p = f"{years} año" if years == 1 else f"{years} años"
+        if lang == 'en': p = f"{years} year" if years == 1 else f"{years} years"
+        parts.append(p)
+    if months:
+        p = f"{months} mes" if months == 1 else f"{months} meses"
+        if lang == 'en': p = f"{months} month" if months == 1 else f"{months} months"
+        parts.append(p)
+    if days_rem:
+        p = f"{days_rem} día" if days_rem == 1 else f"{days_rem} días"
+        if lang == 'en': p = f"{days_rem} day" if days_rem == 1 else f"{days_rem} days"
+        parts.append(p)
 
     if not parts:
         hours_rem = hours % 24
         minutes_rem = minutes % 60
-        if hours_rem: parts.append(f"{hours_rem} horas")
-        if minutes_rem: parts.append(f"{minutes_rem} minutos")
-        if not parts: parts.append("menos de un minuto")
+        if hours_rem:
+            p = f"{hours_rem} hora" if hours_rem == 1 else f"{hours_rem} horas"
+            if lang == 'en': p = f"{hours_rem} hour" if hours_rem == 1 else f"{hours_rem} hours"
+            parts.append(p)
+        if minutes_rem:
+            p = f"{minutes_rem} minuto" if minutes_rem == 1 else f"{minutes_rem} minutos"
+            if lang == 'en': p = f"{minutes_rem} minute" if minutes_rem == 1 else f"{minutes_rem} minutes"
+            parts.append(p)
+        if not parts:
+            parts.append("menos de un minuto" if lang == 'es' else "less than a minute")
 
-    return ", ".join(parts)
+    sep = ", " if lang == 'es' else ", "
+    return sep.join(parts)
 
 # --- Routes ---
 @twitch_bp.route('/followage')
@@ -54,24 +71,37 @@ def followage():
     if cached: return text_response(cached)
 
     try:
+        lang = request.args.get("lang", "es").lower()
         follower_id = get_user_id(user_login)
         channel_id = get_user_id(channel_login)
         
-        if not follower_id: return text_response(f"Usuario '{user_login}' no encontrado", 404)
-        if not channel_id: return text_response(f"Canal '{channel_login}' no encontrado", 404)
+        if not follower_id:
+            msg = f"Usuario '{user_login}' no encontrado" if lang == 'es' else f"User '{user_login}' not found"
+            return text_response(msg, 404)
+        if not channel_id:
+            msg = f"Canal '{channel_login}' no encontrado" if lang == 'es' else f"Channel '{channel_login}' not found"
+            return text_response(msg, 404)
 
         info = get_follow_info(follower_id, channel_id)
-        if not info: return text_response(f"{user_login} no sigue a {channel_login}")
+        if not info:
+            msg = f"{user_login} no sigue a {channel_login}" if lang == 'es' else f"{user_login} is not following {channel_login}"
+            return text_response(msg)
 
         followed_at = datetime.fromisoformat(info.get("followed_at").replace("Z", "+00:00"))
         delta = (datetime.now(timezone.utc) - followed_at).total_seconds()
         
-        result = f"{user_login} sigue a {channel_login} desde hace {_humanize_duration(delta)}."
+        duration = _humanize_duration(delta, lang)
+        if lang == 'en':
+            result = f"{user_login} has been following {channel_login} for {duration}."
+        else:
+            result = f"{user_login} sigue a {channel_login} desde hace {duration}."
+            
         _cache.set(cache_key, result)
         return text_response(result)
     except Exception as e:
         logging.error(f"Error in followage: {e}")
-        return text_response("Error al conectar con Twitch.", 500)
+        msg = "Error al conectar con Twitch." if lang == 'es' else "Error connecting to Twitch."
+        return text_response(msg, 502)
 
 @twitch_bp.route('/token')
 def token():

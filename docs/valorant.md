@@ -1,4 +1,4 @@
-# 🎮 Documentación: Valorant
+#  Documentación: Valorant
 
 Módulo opcional para obtener estadísticas en tiempo real de Valorant mediante la API de HenrikDev.
 
@@ -8,15 +8,15 @@ Módulo opcional para obtener estadísticas en tiempo real de Valorant mediante 
 Obtiene el rango actual, puntos de MMR y el último agente jugado.
 
 - **Parámetros:** `?lang=es` (defecto) o `?lang=en`.
-- **Ejemplo ES:** `Actualmente estoy en Platino 2 con 45 puntos. Mi última partida fue con Jett y gané 18 puntos.`
-- **Ejemplo EN:** `Rank: Platinum 2 with 45 points. Last match was with Jett and I gained 18 points.`
+- **Respuesta ES:** `Actualmente estoy en Platino 2 con 45 puntos. Mi última partida fue con Jett y gané 18 puntos.`
+- **Respuesta EN:** `Rank: Platinum 2 with 45 points. Last match was with Jett and I gained 18 points.`
 
 ### 📍 `/valorant/ultima-ranked`
-Detalles de la última partida competitiva detectada.
+Detalles de la última partida competitiva detectada en el historial.
 
 - **Parámetros:** `?lang=es` (defecto) o `?lang=en`.
-- **Ejemplo ES:** `Mi última partida fue Victoria en Ascent con Jett. KDA: 15/7/3.`
-- **Ejemplo EN:** `Match: Win in Ascent | Agent: Jett | KDA: 15/7/3`
+- **Respuesta ES:** `Mi última partida fue Victoria en Ascent con Jett. KDA: 15/7/3.`
+- **Respuesta EN:** `Match: Win in Ascent | Agent: Jett | KDA: 15/7/3`
 
 ## 🔑 Cómo obtener la API Key (HenrikDev)
 

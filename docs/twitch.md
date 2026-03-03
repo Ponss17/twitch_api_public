@@ -1,4 +1,4 @@
-# 📺 Documentación: Twitch
+#  Documentación: Twitch
 
 Módulo para interactuar con la API de Twitch (Helix) para followage, clips y gestión de tokens.
 
@@ -7,19 +7,20 @@ Módulo para interactuar con la API de Twitch (Helix) para followage, clips y ge
 ### 📍 `/twitch/followage`
 Calcula cuánto tiempo lleva un usuario siguiendo al canal.
 - **Uso:** `/twitch/followage?user=nombre_usuario`
-- **Resultado:** `usuario sigue a canal desde hace 2 años, 3 meses.`
+- **Ejemplo:** `https://api.tu-app.com/twitch/followage?user=ponss17`
+- **Respuesta:** `ponss17 sigue a LosPerris desde hace 1 año, 2 meses.`
 
 ### 📍 `/twitch/clip`
 Crea un clip en vivo del canal configurado.
-- **Uso:** `/twitch/clip` (GET o POST)
-- **Resultado:** URL del clip generado.
+- **Uso:** `/twitch/clip` (Soporta GET o POST)
+- **Respuesta:** `¡Clip creado con éxito! -> https://clips.twitch.tv/UnicoIdentificador`
 
 ### 📍 `/twitch/status`
-Verifica si los tokens configurados son válidos.
+Verifica si el `USER_ACCESS_TOKEN` y el `CLIENT_ID` siguen siendo válidos.
 - **Uso:** `/twitch/status`
 
 ### 📍 `/twitch/token`
-Genera un App Access Token. Requiere autenticación.
+Genera un App Access Token (útil para herramientas externas). Requiere la contraseña configurada.
 - **Uso:** `/twitch/token?password=TU_PASSWORD`
 
 ## 🔑 Cómo obtener las credenciales

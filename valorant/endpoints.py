@@ -65,9 +65,21 @@ def rango():
             
         _cache.set(cache_key, respuesta)
         return text_response(respuesta)
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code
+        if status_code == 404:
+            msg = "Jugador no encontrado. Verifica NOMBRE y TAG en la configuración." if lang == 'es' else "Player not found. Check NAME and TAG in config."
+        elif status_code == 403:
+            msg = "API_KEY inválida o expirada." if lang == 'es' else "Invalid or expired API_KEY."
+        elif status_code == 429:
+            msg = "Demasiadas peticiones. Intenta de nuevo en unos segundos." if lang == 'es' else "Rate limit reached. Try again in a few seconds."
+        else:
+            msg = f"Error de la API de Valorant ({status_code})." if lang == 'es' else f"Valorant API Error ({status_code})."
+        return text_response(msg, status_code)
     except Exception as e:
         logging.error(f"Error in rank endpoint: {e}")
-        return text_response("Servicio no disponible.", 502)
+        msg = "Servicio de Valorant no disponible temporalmente." if lang == 'es' else "Valorant service temporarily unavailable."
+        return text_response(msg, 502)
 
 def obtener_ultimo_agente():
     try:
@@ -115,6 +127,11 @@ def ultima_ranked():
                     return text_response(f"Mi última partida fue {res} en {mapa} con {personaje}. KDA: {k}/{d}/{a}.")
                     
         return text_response("Sin ranked." if lang == 'es' else "No ranked found.")
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code
+        msg = f"Error de la API de Valorant ({status_code})." if lang == 'es' else f"Valorant API Error ({status_code})."
+        return text_response(msg, status_code)
     except Exception as e:
         logging.error(f"Error checking last match: {e}")
-        return text_response("Error.", 500)
+        msg = "Error al obtener la última partida." if lang == 'es' else "Error fetching last match."
+        return text_response(msg, 500)

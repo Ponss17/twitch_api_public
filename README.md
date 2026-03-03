@@ -1,6 +1,6 @@
-# <img src="./img/user/LosPerris-minimal.webp" width="40" height="40" style="vertical-align: middle;"> LosPerris Twitch Api Public ✨
+# <img src="./img/user/LosPerris-minimal.webp" width="40" height="40" style="vertical-align: middle;"> LosPerris Twitch Api Public 
 
-API en Flask con endpoints para Valorant y Twitch. Diseñada con caché TTL, sesiones HTTP optimizadas, seguridad global y despliegue sencillo en Vercel.
+API personalizada de uso público y gestión privada para canales de Twitch. Integración sencilla para comandos de chat, estadísticas de Valorant y herramientas de streaming.
 
 ## 🚀 Despliegue en Vercel
 
@@ -27,6 +27,20 @@ Este proyecto está optimizado para **Vercel**.
 - `/twitch/clip` → Crea un clip del canal configurado al instante.
 - `/twitch/token` → Genera un token de App (protegido por contraseña).
 
+## 📝 Ejemplos de Uso (Comandos)
+
+Copia y pega estos ejemplos en tus paneles de control:
+
+### Nightbot
+- **Followage:**
+  `$(urlfetch https://tu-api.vercel.app/twitch/followage?user=$(touser))`
+- **Rango Valorant:**
+  `$(urlfetch https://tu-api.vercel.app/valorant/rango)`
+
+### StreamElements
+- **Última Ranked:**
+  `${urlfetch https://tu-api.vercel.app/valorant/ultima-ranked}`
+
 ## ⚙️ Configuración
 
 ### Variables de Entorno (Environment Variables)
@@ -47,6 +61,7 @@ Edita `valorant/config.py` para cambiar el perfil de Valorant:
 NOMBRE = "TuNombre"
 TAG    = "TuTag"
 REGION = "na" # na, eu, latam, etc.
+Nota : Prueba usar "na" si no te deja con tu cuenta de latam.
 ```
 
 ## 🛠️ Desarrollo Local
@@ -61,4 +76,4 @@ Puedes usar este código libremente para tus proyectos siempre que mantengas los
 Consulta el archivo [LICENSE](./LICENSE) para más detalles.
 
 ---
-Hecho con ❤️ por [LosPerris](https://www.twitch.tv/ponss17)
+Hecho con ❤️ por [LosPerris](https://www.losperris.site)

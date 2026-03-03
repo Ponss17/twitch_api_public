@@ -130,10 +130,10 @@ def index():
             <div class="card">
                 <div class="card-header">
                     <img src="{url_for('static', filename='twitch/twitch.webp')}" alt="Twitch" class="service-icon">
-                    <div class="header-text">
-                        <h2>Twitch Api</h2>
-                        <p>Followage, Clips y Status</p>
-                    </div>
+                <div class="header-text">
+                    <h2>Twitch API</h2>
+                    <p>Uso público, gestión privada</p>
+                </div>
                 </div>
                 <div class="card-body">
                     <ul class="endpoint-list">
