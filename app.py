@@ -71,8 +71,24 @@ def index():
             </div>
             <div class="card-body">
                 <ul class="endpoint-list">
-                    <li><a href="/valorant/rango"><code>/valorant/rango</code></a> <span class="badge">GET</span></li>
-                    <li><a href="/valorant/ultima-ranked"><code>/valorant/ultima-ranked</code></a> <span class="badge">GET</span></li>
+                    <li>
+                        <div style="display: flex; align-items: center; width: 100%;">
+                            <a href="/valorant/rango"><code>/valorant/rango</code></a>
+                            <button class="copy-btn" onclick="copyCmd('/valorant/rango')" title="Copiar comando Nightbot">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                            <span class="badge">GET</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div style="display: flex; align-items: center; width: 100%;">
+                            <a href="/valorant/ultima-ranked"><code>/valorant/ultima-ranked</code></a>
+                            <button class="copy-btn" onclick="copyCmd('/valorant/ultima-ranked')" title="Copiar comando Nightbot">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                            <span class="badge">GET</span>
+                        </div>
+                    </li>
                 </ul>
                 <div class="card-footer">
                     <a href="/valorant" class="btn btn-primary btn-valorant">Ver Detalle</a>
@@ -88,6 +104,7 @@ def index():
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LosPerris Twitch Api Public | Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="{url_for('static', filename='user/LosPerris-minimal.webp')}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {{
@@ -110,8 +127,11 @@ def index():
         .endpoint-list li {{ margin-bottom: 10px; display: flex; justify-content: space-between; }}
         .endpoint-list a {{ color: var(--txt); text-decoration: none; font-size: 0.9rem; }}
         .endpoint-list a:hover {{ color: var(--acc); }}
-        code {{ background: rgba(255,255,255,0.05); padding: 2px 5px; border-radius: 4px; font-family: monospace; }}
-        .badge {{ font-size: 0.65rem; color: var(--ok); border: 1px solid var(--ok); padding: 1px 4px; border-radius: 4px; }}
+        code {{ background: rgba(255,255,255,0.05); padding: 2px 5px; border-radius: 4px; font-family: monospace; flex-grow: 1; }}
+        .badge {{ font-size: 0.65rem; color: var(--ok); border: 1px solid var(--ok); padding: 1px 4px; border-radius: 4px; margin-left: 8px; flex-shrink: 0; }}
+        .copy-btn {{ background: transparent; border: none; color: var(--txt-sec); cursor: pointer; padding: 4px; margin-left: 8px; transition: 0.2s; display: flex; align-items: center; border-radius: 4px; }}
+        .copy-btn:hover {{ color: var(--acc); background: rgba(255,255,255,0.05); }}
+        .copy-btn svg {{ width: 14px; height: 14px; }}
         .card-footer {{ margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--brd); }}
         .btn {{ display: block; padding: 10px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600; font-size: 0.9rem; transition: 0.2s; color: white; }}
         .btn-twitch {{ background: var(--twt); }}
@@ -137,9 +157,33 @@ def index():
                 </div>
                 <div class="card-body">
                     <ul class="endpoint-list">
-                        <li><a href="/twitch/status"><code>/twitch/status</code></a> <span class="badge">GET</span></li>
-                        <li><a href="/twitch/followage?user=ponss17"><code>/twitch/followage</code></a> <span class="badge">GET</span></li>
-                        <li><a href="/twitch/clip"><code>/twitch/clip</code></a> <span class="badge">POST</span></li>
+                        <li>
+                            <div style="display: flex; align-items: center; width: 100%;">
+                                <a href="/twitch/status"><code>/twitch/status</code></a>
+                                <button class="copy-btn" onclick="copyCmd('/twitch/status')" title="Copiar comando">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <span class="badge">GET</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div style="display: flex; align-items: center; width: 100%;">
+                                <a href="/twitch/followage?user=ponss17"><code>/twitch/followage</code></a>
+                                <button class="copy-btn" onclick="copyCmd('/twitch/followage?user=$(touser)')" title="Copiar comando Nightbot">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <span class="badge">GET</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div style="display: flex; align-items: center; width: 100%;">
+                                <a href="/twitch/clip"><code>/twitch/clip</code></a>
+                                <button class="copy-btn" onclick="copyCmd('/twitch/clip')" title="Copiar comando">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                </button>
+                                <span class="badge">POST</span>
+                            </div>
+                        </li>
                     </ul>
                     <div class="card-footer">
                         <a href="/twitch" class="btn btn-twitch">Ver Endpoints</a>
@@ -152,6 +196,21 @@ def index():
             <p>&copy; 2024 LosPerris • Desplegado en Vercel ✨</p>
         </div>
     </div>
+    <script>
+        function copyCmd(path) {{
+            const url = window.location.origin + path;
+            const fullCmd = path.includes('followage') || path.includes('rango') || path.includes('ranked') 
+                ? `$(urlfetch ${{url}})` 
+                : url;
+            
+            navigator.clipboard.writeText(fullCmd).then(() => {{
+                const btn = event.currentTarget;
+                const originalInner = btn.innerHTML;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                setTimeout(() => btn.innerHTML = originalInner, 2000);
+            }});
+        }}
+    </script>
 </body>
 </html>
     """
