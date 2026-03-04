@@ -1,68 +1,56 @@
-#  Documentación: Twitch
+#  Documentación de Twitch
 
-Módulo para interactuar con la API de Twitch (Helix) para followage, clips y gestión de tokens.
+Guía detallada sobre el funcionamiento, endpoints y configuración del módulo de Twitch.
 
-## Endpoints
+## 1. Funcionamiento del Módulo
 
-### 📍 `/twitch/followage`
+El módulo de Twitch utiliza la [API de Twitch (Helix)](https://dev.twitch.tv/docs/api/) para interactuar con tu canal. Para que el bot pueda realizar acciones (como crear clips), necesita un **User Access Token**.
+
+### Flujo de Tokens
+1. **App Token**: Se genera automáticamente para consultas públicas (followage).
+2. **User Token**: Se genera cuando tú, como dueño del canal, te vinculas desde el Dashboard. Este token tiene "scopes" (permisos) para crear clips.
+
+## 2. Endpoints Disponibles
+
+### [GET] `/twitch/followage`
 Calcula cuánto tiempo lleva un usuario siguiendo al canal.
-- **Uso:** `/twitch/followage?user=nombre_usuario`
-- **Ejemplo:** `https://api.tu-app.com/twitch/followage?user=ponss17`
-- **Respuesta:** `ponss17 sigue a LosPerris desde hace 1 año, 2 meses.`
+- **Parámetros**:
+    - `user` (Requerido): Nombre del usuario que quieres consultar.
+    - `channel` (Opcional): Nombre del canal (por defecto usa `CHANNEL_LOGIN`).
+- **Ejemplo**: `/twitch/followage?user=ponss17`
 
-### 📍 `/twitch/clip`
-Crea un clip en vivo del canal configurado.
-- **Uso:** `/twitch/clip` (Soporta GET o POST)
-- **Respuesta:** `¡Clip creado con éxito! -> https://clips.twitch.tv/UnicoIdentificador`
+### [GET] `/twitch/clip`
+Crea un clip del directo actual.
+- **Parámetros**:
+    - `channel` (Opcional): Canal donde crear el clip.
+- **Requisito**: Debes estar en directo y haber vinculado tu cuenta en el Dashboard.
+- **Respuesta**: La URL del clip generado o un error descriptivo.
 
-### 📍 `/twitch/status`
-Verifica si el `USER_ACCESS_TOKEN` y el `CLIENT_ID` siguen siendo válidos.
-- **Uso:** `/twitch/status`
+### [GET] `/twitch/token`
+Genera un App Access Token (solo para uso interno o depuración).
+- **Seguridad**: Requiere `?password=TU_PASSWORD` o el header `X-Endpoint-Password`.
+- **Respuesta**: El token generado en texto plano.
 
-### 📍 `/twitch/token`
-Genera un App Access Token (útil para herramientas externas). Requiere la contraseña configurada.
-- **Uso:** `/twitch/token?password=TU_PASSWORD`
+### [GET] `/twitch/status`
+Verifica si la API está configurada correctamente.
+- **Respuesta**: Un JSON detallado con el estado de los tokens y la conexión.
 
-## 🔑 Cómo obtener las credenciales
+## 3. Configuración de Comandos (Bots)
 
-Para que los endpoints de Twitch funcionen, necesitas registrar una aplicación y obtener tokens. Sigue estos pasos:
+Sustituye `tu-api.vercel.app` por tu dirección real.
 
-### 1. Registrar Aplicación en Twitch
-1. Ve a la [Consola de Desarrolladores de Twitch](https://dev.twitch.tv/console).
-2. Haz clic en **Register Your Application**.
-3. **Nombre:** Pon un nombre a tu app (ej: "Mi Bot de Stats").
-4. **OAuth Redirect URLs:** Añade `https://tu-api.vercel.app/twitch/callback`. (Si pruebas en local, usa `http://localhost:5000/twitch/callback`).
-5. **Categoría:** Elige "Application Integration".
-6. Haz clic en **Create**.
+### Nightbot
+- **Followage**: `$(urlfetch https://tu-api.vercel.app/twitch/followage?user=$(touser)&channel=TU_CANAL)`
+- **Clip**: `$(urlfetch https://tu-api.vercel.app/twitch/clip?channel=TU_CANAL)`
 
-### 2. Obtener Client ID y Secret
-1. Selecciona tu app en la consola.
-2. Copia el **Client ID**.
-3. Haz clic en **New Secret** y copia el **Client Secret** (guárdalo bien).
+### StreamElements
+- **Followage**: `${readapi https://tu-api.vercel.app/twitch/followage?user=${user.name}&channel=TU_CANAL}`
+- **Clip**: `${readapi https://tu-api.vercel.app/twitch/clip?channel=TU_CANAL}`
 
-### 3. Obtener User Access Token (OAuth Flow)
-Esta API necesita permisos específicos para crear clips y ver seguidores:
-1. Configura `CLIENT_ID` y `CLIENT_SECRET` en Vercel.
-2. Abre esta URL en tu navegador reemplazando tus datos:
-   `https://id.twitch.tv/oauth2/authorize?client_id=TU_CLIENT_ID&redirect_uri=TU_REDIRECT_URI&response_type=token&scope=clips:edit+moderator:read:followers`
-3. Dale a **Autorizar**. Serás redirigido a tu API.
-4. Verás el **USER_ACCESS_TOKEN** en pantalla. Cópialo y ponlo en tu variable de entorno `USER_ACCESS_TOKEN`.
+## 4. Preguntas Frecuentes (FAQ)
 
-> [!IMPORTANT]
-> Para que el `followage` funcione, el token debe ser de la cuenta del **streamer** (o de un moderador del canal).
-
-## ⚙️ Configuración (`twitch/config.py`)
-
-Variables que debes configurar en Vercel:
-- `CLIENT_ID`: De la consola de desarrolladores.
-- `CLIENT_SECRET`: De la consola de desarrolladores.
-- `CHANNEL_LOGIN`: El nombre de tu canal de Twitch.
-- `USER_ACCESS_TOKEN`: El token obtenido en el paso 3.
-- `ENDPOINT_PASSWORD`: Contraseña para generar tokens de App.
+- **¿Vence el token?** Sí, el token de usuario dura unos 60 días. El Dashboard te avisará cuando queden pocos días. Solo tienes que volver a pulsar "Vincular" para renovarlo.
+- **El comando de clip falla**: Asegúrate de que el canal esté **en vivo** al momento de usarlo. Twitch no permite crear clips de canales offline.
 
 ---
-## 📝 Notas Importantes
-> [!IMPORTANT]
-> **Vercel / Despliegue:** Una vez vinculado Twitch, recuerda copiar el token que aparece en pantalla y pegalo en tus variables de entorno de Vercel como `USER_ACCESS_TOKEN`. Sin esto, los comandos no funcionarán en la nube.
-
-Parte de **LosPerris Twitch Api Public**
+[Volver al README](../README.md)

@@ -1,53 +1,49 @@
-#  Documentación: Valorant
+#  Documentación de Valorant
 
-Módulo opcional para obtener estadísticas en tiempo real de Valorant mediante la API de HenrikDev.
+Guía detallada sobre el módulo de estadísticas de Valorant, integrando la API de HenrikDev.
 
-## Endpoints
+## 1. Funcionamiento del Módulo
 
-### 📍 `/valorant/rango`
-Obtiene el rango actual, puntos de MMR y el último agente jugado.
+Este módulo consulta la [API de HenrikDev](https://api.henrikdev.xyz/) para obtener en tiempo real el rango, puntos de MMR (Movement MMR), y detalles de la última partida competitiva.
 
-- **Parámetros:** `?lang=es` (defecto) o `?lang=en`.
-- **Respuesta ES:** `Actualmente estoy en Platino 2 con 45 puntos. Mi última partida fue con Jett y gané 18 puntos.`
-- **Respuesta EN:** `Rank: Platinum 2 with 45 points. Last match was with Jett and I gained 18 points.`
+### Optimización y Caché
+- **Caché**: Para evitar saturar la API externa y mejorar la velocidad de respuesta para los bots, las consultas se guardan en caché durante **15 minutos** (configurable en `.env`).
+- **Rápida Respuesta**: Los endpoints devuelven texto plano (`text/plain`), lo cual es ideal para que los chatbots lo lean directamente sin problemas de formato.
 
-### 📍 `/valorant/ultima-ranked`
-Detalles de la última partida competitiva detectada en el historial.
+## 2. Endpoints Disponibles
 
-- **Parámetros:** `?lang=es` (defecto) o `?lang=en`.
-- **Respuesta ES:** `Mi última partida fue Victoria en Ascent con Jett. KDA: 15/7/3.`
-- **Respuesta EN:** `Match: Win in Ascent | Agent: Jett | KDA: 15/7/3`
+### [GET] `/valorant/rango`
+Muestra el rango actual, el MMR y el último agente jugado.
+- **Parámetros Opcionales**:
+    - `name`: Nombre del usuario (por defecto usa `VALORANT_USER`).
+    - `tag`: Etiqueta (por defecto usa `VALORANT_TAG`).
+    - `region`: Región (por defecto usa `VALORANT_REGION`).
+    - `lang`: Idioma de respuesta (`es` o `en`).
+- **Respuesta**: Rango: Oro 3 (22 RR)
 
-## 🔑 Cómo obtener la API Key (HenrikDev)
+### [GET] `/valorant/ultima-ranked`
+Detalle de la última partida competitiva jugada.
+- **Parámetros Opcionales**: Los mismos que `/valorant/rango`.
+- **Respuesta**: "Resultado: Victoria | Mapa: Ascent | KDA: 20/10/5"
 
-Para que el módulo de Valorant funcione, necesitas una clave de la API de HenrikDev.
+### [GET] `/valorant/rango-imagen`
+Obtiene la URL directa de la imagen del rango actual.
+- **Uso**: Ideal para usarlo como fuente de navegador en OBS o para mostrarlo en un panel de streaming.
+- **Respuesta**: La URL de la imagen del rango (ej: Bronze 1).
 
-1. Ve al [Dashboard de HenrikDev](https://dashboard.henrikdev.xyz/).
-2. Inicia sesión con Discord.
-3. Crea una nueva **API Key**.
-4. Añádela a tus variables de entorno como `API_KEY`.
+## 3. Configuración de Región
 
-> [!NOTE]
-> La versión gratuita tiene límites. Esta API usa caché para optimizar las peticiones.
+Si tu cuenta es de Latinoamérica, te recomendamos probar con la región `na` (Norteamérica) si la región `latam` no devuelve datos. Esto se debe a cómo la API de HenrikDev organiza los servidores.
 
-## ⚙️ Configuración (`valorant/config.py`)
+## 4. Configuración de Comandos (Bots)
 
-Configura los datos del jugador aquí:
-```python
-NOMBRE = "Nombre"
-TAG    = "TAG"
-REGION = "na" # na, eu, latam, kr, ap
-API_KEY = os.environ.get("API_KEY", "")
-```
+### Nightbot
+- **Rango**: `$(urlfetch https://tu-api.vercel.app/valorant/rango?name=NOMBRE&tag=TAG&region=na)`
+- **Última**: `$(urlfetch https://tu-api.vercel.app/valorant/ultima-ranked?name=NOMBRE&tag=TAG&region=na)`
 
-## 🧠 Características Técnicas
-- **Caché:** TTL configurable (`VALORANT_CACHE_TTL`, defecto 15s).
-- **Traducciones:** Rango traducido automáticamente al español.
-- **Robustez:** Reintentos automáticos mediante `common/http.py`.
+### StreamElements
+- **Rango**: `${readapi https://tu-api.vercel.app/valorant/rango?name=NOMBRE&tag=TAG&region=na}`
+- **Última**: `${readapi https://tu-api.vercel.app/valorant/ultima-ranked?name=NOMBRE&tag=TAG&region=na}`
 
 ---
-## 📝 Notas Importantes
-> [!TIP]
-> **Región de LATAM:** Si tu cuenta no conecta o da error, suele solucionarse cambiando la región a `na` en `valorant/config.py`. 
-
-Parte de **LosPerris Twitch Api Public**
+[Volver al README](../README.md)

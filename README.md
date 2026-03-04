@@ -1,79 +1,33 @@
-# <img src="./static/user/LosPerris-minimal.webp" width="40" height="40" style="vertical-align: middle;"> LosPerris Twitch Api Public 
+# <img src="./static/user/LosPerris-minimal.webp" width="40" height="40" style="vertical-align: middle;"> LosPerris Twitch API Public 
 
-API personalizada de uso público y gestión privada para canales de Twitch. Integración sencilla para comandos de chat, estadísticas de Valorant y herramientas de streaming.
+API personalizada para canales de Twitch. Integración sencilla para comandos de chat, estadísticas de Valorant y herramientas de streaming.
 
-## 🚀 Despliegue en Vercel
+## 🚀 Inicio Rápido
 
-Este proyecto está optimizado para **Vercel**. 
+1. **GitHub:** Sube este código a tu repositorio (o haz un Fork).
+2. **Vercel:** Conecta tu repositorio y despliega.
+3. **Configuración:** Configura las variables esenciales en el panel de Vercel.
 
-1. **GitHub:** Sube este código a tu repositorio.
-2. **Vercel:** Conecta tu repositorio.
-3. **Variables de Entorno:** Configura las variables necesarias (ver sección abajo).
-4. **Listo!** Tu API estará volando en segundos.
+## 📄 Documentación Detallada
 
-## 🔸 Endpoints Principales
+Para guías paso a paso, ejemplos de comandos y detalles técnicos, consulta:
 
-- `/` → Dashboard con acceso rápido a todos los servicios.
-- `/twitch` → Panel de control de Twitch.
-- `/valorant` → Panel de estadísticas de Valorant.
+- [**Guía de Despliegue en Vercel**](./docs/vercel.md) — *Recomendado para empezar.*
+- [**Módulo de Twitch**](./docs/twitch.md) — *Manual técnico de Twitch.*
+- [**Módulo de Valorant**](./docs/valorant.md) — *Manual técnico de Valorant.*
 
-### 🎮 Valorant
-- `/valorant/rango` → Rango actual, MMR y último agente jugado. Soporta `?lang=en` para inglés.
-- `/valorant/ultima-ranked` → Detalle de la última partida competitiva. Soporta `?lang=en`.
-
-### 📺 Twitch
-- `/twitch/status` → Verifica el estado de tus tokens y configuración.
-- `/twitch/followage?user=<nombre>` → Tiempo de seguimiento de un usuario.
-- `/twitch/clip` → Crea un clip del canal configurado al instante.
-- `/twitch/token` → Genera un token de App (protegido por contraseña).
-
-## 📝 Ejemplos de Uso (Comandos)
-
-Copia y pega estos ejemplos en tus paneles de control:
-
-### Nightbot
-- **Followage:**
-  `$(urlfetch https://tu-api.vercel.app/twitch/followage?user=$(touser))`
-- **Rango Valorant:**
-  `$(urlfetch https://tu-api.vercel.app/valorant/rango)`
-
-### StreamElements
-- **Última Ranked:**
-  `${urlfetch https://tu-api.vercel.app/valorant/ultima-ranked}`
-
-## ⚙️ Configuración
-
-### Variables de Entorno (Environment Variables)
+## ⚙️ Configuración (Variables de Entorno)
 
 | Variable | Descripción |
 |----------|-------------|
-| `API_KEY` | Tu API Key de HenrikDev (Valorant). |
-| `ENABLE_VALORANT` | `true`/`false` para habilitar el módulo. |
-| `ENDPOINT_PASSWORD` | Contraseña para endpoints protegidos. |
-| `CLIENT_ID` | Twitch Client ID. |
+| `CLIENT_ID` | Twitch Client ID ([Dev Console](https://dev.twitch.tv/console)). |
 | `CLIENT_SECRET` | Twitch Client Secret. |
-| `CHANNEL_LOGIN` | Nombre de tu canal de Twitch. |
-| `USER_ACCESS_TOKEN` | Token de usuario de Twitch. |
-
-### Personalización de Jugador
-Edita `valorant/config.py` para cambiar el perfil de Valorant:
-```python
-NOMBRE = "TuNombre"
-TAG    = "TuTag"
-REGION = "na" # na, eu, latam, etc.
-Nota : Prueba usar "na" si no te deja con tu cuenta de latam.
-```
-
-## 🛠️ Desarrollo Local
-1. Instala dependencias: `pip install -r requirements.txt`
-2. Ejecuta: `python app.py`
-3. Abre: `http://localhost:5000`
+| `CHANNEL_LOGIN` | Tu usuario de Twitch. |
+| `API_KEY` | API Key de [HenrikDev](https://api.henrikdev.xyz/). |
+| `ENABLE_VALORANT`| `true` para activar el módulo. |
 
 ## 🛡️ Licencia y Créditos
-Proyecto creado por **LosPerris**. 
-Puedes usar este código libremente para tus proyectos siempre que mantengas los créditos. 
-
-Consulta el archivo [LICENSE](./LICENSE) para más detalles.
+Proyecto creado por **LosPerris**. Puedes usar este código libremente siempre que mantengas los créditos. 
 
 ---
-Hecho con ❤️ por [LosPerris](https://www.losperris.site)
+Hecho con ❤️ por [LosPerris](https://losperris.site)

@@ -2,7 +2,6 @@ from flask import Flask, Response, url_for, request, Blueprint
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 import logging
@@ -10,8 +9,9 @@ import importlib
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from common.ui import get_page_layout
+from common.errors import handle_bot_errors
 
-# --- Initialization ---
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'), static_url_path='/static')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
@@ -25,7 +25,6 @@ limiter = Limiter(
     storage_uri=os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
 )
 
-# Security headers - Cabeceras de seguridad
 @app.after_request
 def add_security_headers(resp: Response):
     resp.headers.setdefault('X-Content-Type-Options', 'nosniff')
@@ -37,14 +36,18 @@ def add_security_headers(resp: Response):
     )
     return resp
 
-# --- Twitch ---
+@app.errorhandler(404)
+@app.errorhandler(500)
+@app.errorhandler(502)
+def bot_error_handler(e):
+    return handle_bot_errors(e)
+
 from twitch.endpoints import twitch_bp
 from twitch.index import twitch_index
 
 app.register_blueprint(twitch_bp, url_prefix='/twitch')
 app.add_url_rule('/twitch', 'twitch_index', view_func=twitch_index)
 
-# --- Valorant (Optional) ---
 ENABLE_VALORANT = os.environ.get("ENABLE_VALORANT", "true").lower() == "true"
 valorant_active = False
 
@@ -59,136 +62,132 @@ if ENABLE_VALORANT and os.path.isdir(os.path.join(os.path.dirname(__file__), 'va
     except Exception as e:
         logging.error(f"Error loading Valorant module: {e}")
 
-# --- Favicon ---
 @app.route('/favicon.ico')
 @app.route('/favicon.png')
 def favicon():
     return app.send_static_file('user/LosPerris-minimal.webp')
 
-# --- Dashboard ---
 @app.route('/')
 def index():
-    valorant_card = ""
+    t_status = "Sin vincular"
+    t_dot = ""
+    t_note = ""
+    if os.environ.get("USER_ACCESS_TOKEN"):
+        try:
+            # Validamos el token y calculamos los días restantes para mostrar el aviso de renovación
+            from twitch.api import validate_token
+            info = validate_token(os.environ.get("USER_ACCESS_TOKEN"))
+            expires_in = info.get("expires_in", 0)
+            days = expires_in // 86400
+            t_status = "Conectado"
+            t_dot = "active"
+            if days > 0:
+                t_note = f'<div class="token-note">Vence en {days} días</div>'
+            else:
+                t_note = '<div class="token-note" style="color:#fb7185">Vence hoy</div>'
+        except:
+            t_status = "Token expirado"
+            t_dot = ""
+            t_note = '<div class="token-note" style="color:#fb7185">Renueva la conexión</div>'
+
     v_status = "Deshabilitado"
     v_dot = ""
     if valorant_active:
-        v_status = "Habilitado"
-        v_dot = "active"
-        valorant_url = url_for('static', filename='valorant/valorant_Icon_purple.webp')
-        valorant_card = f"""
-        <div class="card service-card">
-            <div class="card-header">
-                <img src="{valorant_url}" alt="Valorant" class="service-icon">
-                <div class="header-text">
-                    <h2>Valorant</h2>
-                    <p>Estadísticas y rango actual</p>
+        from valorant.config import API_KEY as V_API_KEY
+        if V_API_KEY:
+            v_status = "Habilitado"
+            v_dot = "active"
+        else:
+            v_status = "Falta API Key"
+            v_dot = ""
+    
+    logo_url = url_for('static', filename='user/LosPerris-minimal.webp')
+    
+    valorant_card_html = ""
+    if valorant_active:
+        valorant_icon_url = url_for('static', filename='valorant/valorant_logo.webp')
+        valorant_card_html = f"""
+            <a href="/valorant" class="card card-v">
+                <div class="card-header">
+                    <div class="card-icon" style="background: rgba(251, 113, 133, 0.1);">
+                        <img src="{valorant_icon_url}" width="28" height="28" alt="Valorant">
+                    </div>
+                    <div class="card-title">
+                        <h2>Valorant</h2>
+                        <p>Rango y última partida</p>
+                    </div>
                 </div>
-            </div>
-            <div class="card-body">
-                <div class="status-indicator">
-                    <div class="dot {v_dot}"></div>
-                    <span>{v_status}</span>
+                <div class="status">
+                    <span class="dot {v_dot}"></span>
+                    {v_status}
                 </div>
-                <div class="card-actions">
-                    <a href="/valorant" class="btn btn-primary btn-valorant">Gestionar</a>
-                </div>
-            </div>
-        </div>
+                <div class="btn">Gestionar</div>
+            </a>
         """
 
-    # Better status check for Twitch - Mejor verificación de estado para Twitch
-    t_status = "Vincular cuenta"
-    t_dot = ""
-    if os.environ.get("USER_ACCESS_TOKEN"):
-        t_status = "Cuenta vinculada"
-        t_dot = "active"
+    extra_css = """
+        .container { width: 100%; max-width: 600px; padding: 40px 20px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .profile-img { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--acc); margin-bottom: 16px; opacity: 0.9; }
+        h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+        .subtitle { color: var(--txt-sec); font-size: 0.9rem; }
+        .grid { display: grid; gap: 16px; margin-top: 32px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .card { background: var(--card); border: 1px solid var(--brd); border-radius: 16px; padding: 24px; text-decoration: none; color: inherit; display: flex; flex-direction: column; transition: 0.2s; }
+        .card:hover { border-color: var(--acc); transform: translateY(-2px); }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .card-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); border: 1px solid var(--brd); }
+        .card-title h2 { font-size: 1.1rem; }
+        .card-title p { font-size: 0.75rem; color: var(--txt-sec); }
+        .status { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--txt-sec); margin-top: auto; padding-top: 16px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+        .active { background: #22c55e !important; box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); }
+        .token-note { font-size: 0.7rem; color: var(--txt-sec); margin-top: 4px; font-weight: 600; }
+        .btn { display: block; text-align: center; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--brd); border-radius: 8px; font-size: 0.85rem; font-weight: 600; margin-top: 16px; transition: 0.2s; }
+        .card:hover .btn { background: var(--acc); color: white; border-color: var(--acc); }
 
-    # Generate URLs for images - Generar URLs para imágenes
-    logo_url = url_for('static', filename='user/LosPerris-minimal.webp')
-    twitch_icon_url = url_for('static', filename='twitch/twitch.webp')
+        .card-v:hover { border-color: #fb7185 !important; }
+        .card-v:hover .btn { background: #fb7185 !important; border-color: #fb7185 !important; color: white !important; }
+        .footer { text-align: center; margin-top: 40px; color: var(--txt-sec); font-size: 0.8rem; opacity: 0.6; }
+    """
 
-    html = f"""
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LosPerris | Dashboard</title>
-    <link rel="icon" type="image/x-icon" href="{logo_url}">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {{
-            --bg: #0c0e12; --surf: #161a21; --brd: #2d333b; --txt: #f0f6fc; --txt-sec: #8b949e;
-            --acc: #8957e5; --val: #fa4454; --twt: #9146ff; --ok: #3fb950;
-        }}
-        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-        body {{ background: var(--bg); color: var(--txt); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }}
-        .container {{ width: 100%; max-width: 800px; animation: fadeIn 0.5s ease; }}
-        @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(5px); }} to {{ opacity: 1; transform: translateY(0); }} }}
-        .header {{ text-align: center; margin-bottom: 40px; }}
-        .logo {{ width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--acc); margin-bottom: 15px; }}
-        h1 {{ font-size: 2rem; margin-bottom: 5px; }}
-        .header p {{ color: var(--txt-sec); }}
-        
-        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }}
-        .card {{ background: var(--surf); border: 1px solid var(--brd); border-radius: 16px; transition: 0.2s; overflow: hidden; display: flex; flex-direction: column; }}
-        .card:hover {{ border-color: var(--acc); transform: translateY(-3px); }}
-        .card-header {{ padding: 25px; display: flex; align-items: center; gap: 15px; }}
-        .service-icon {{ width: 45px; height: 45px; border-radius: 10px; }}
-        .card-body {{ padding: 0 25px 25px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }}
-        
-        .status-indicator {{ display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--txt-sec); margin-bottom: 20px; }}
-        .dot {{ width: 8px; height: 8px; border-radius: 50%; background: var(--txt-sec); }}
-        .dot.active {{ background: var(--ok); box-shadow: 0 0 10px var(--ok); }}
-        
-        .btn {{ display: block; width: 100%; padding: 14px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 700; font-size: 1rem; transition: 0.2s; color: white; border: none; cursor: pointer; }}
-        .btn-twitch {{ background: var(--twt); }}
-        .btn-valorant {{ background: var(--val); }}
-        .btn:hover {{ filter: brightness(1.1); transform: translateY(-1px); }}
-        
-        .footer {{ margin-top: 50px; text-align: center; font-size: 0.85rem; color: var(--txt-sec); opacity: 0.6; }}
-    </style>
-</head>
-<body>
+    content = f"""
     <div class="container">
         <div class="header">
-            <img src="{logo_url}" alt="Logo" class="logo">
-            <h1>LosPerris</h1>
-            <p>Panel de Control Simplificado</p>
+            <img src="{logo_url}" alt="Logo" class="profile-img">
+            <h1>LosPerris API</h1>
+            <p class="subtitle">Panel de control de comandos</p>
         </div>
-        
+
         <div class="grid">
-            <!-- Twitch Card -->
-            <div class="card">
+            <a href="/twitch" class="card">
                 <div class="card-header">
-                    <img src="{twitch_icon_url}" alt="Twitch" class="service-icon">
-                    <div class="header-text">
+                    <div class="card-icon" style="background: rgba(168, 85, 247, 0.1);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#a855f7"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+                    </div>
+                    <div class="card-title">
                         <h2>Twitch</h2>
-                        <p>Clips y seguidores</p>
+                        <p>Clips y seguimiento</p>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="status-indicator">
-                        <div class="dot {t_dot}"></div>
-                        <span>{t_status}</span>
+                <div class="status" style="flex-direction: column; align-items: flex-start; gap: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="dot {t_dot}"></span>
+                        {t_status}
                     </div>
-                    <div class="card-actions">
-                        <a href="/twitch" class="btn btn-twitch">Gestionar</a>
-                    </div>
+                    {t_note}
                 </div>
-            </div>
-            
-            {valorant_card}
+                <div class="btn">Gestionar</div>
+            </a>
+
+            {valorant_card_html}
         </div>
-        
+
         <div class="footer">
-            <p>&copy; 2026 LosPerris • Simplicidad ante todo ✨</p>
+            &copy; 2026 LosPerris • v1.5.0
         </div>
     </div>
-</body>
-</html>
     """
-    return Response(html, mimetype="text/html")
+    return Response(get_page_layout("Dashboard", content, extra_css), mimetype="text/html")
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=int(os.environ.get("PORT", 5000)), debug=True)

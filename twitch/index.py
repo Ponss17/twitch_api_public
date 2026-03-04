@@ -1,120 +1,123 @@
 from flask import Response, request, url_for
 from .config import CHANNEL_LOGIN, USER_ACCESS_TOKEN
-
+from common.ui import get_page_layout
 
 def twitch_index():
-    # Pre-build Nightbot commands with explicit channel - Comandos con canal explícito
     base_url = url_for('twitch.status', _external=True).replace('/status', '')
-    redirect_uri = url_for('twitch.oauth_callback', _external=True)
-    
-    # Use explicit channel param for user confidence - Usar parámetro de canal explícito
     current_channel = CHANNEL_LOGIN or "TU_CANAL"
-    cmd_follow = f"$(urlfetch {base_url}/followage?user=$(touser)&channel={current_channel})"
-    cmd_clip = f"$(urlfetch {base_url}/clip?channel={current_channel})"
-
     is_connected = bool(USER_ACCESS_TOKEN)
 
-    html = f"""
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Twitch | LosPerris</title>
-    <style>
-      :root {{ --bg: #0e1117; --card: #161b22; --brd: #30363d; --txt: #c9d1d9; --acc: #9146ff; --ok: #238636; }}
-      body {{ margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); color: var(--txt); font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; padding: 10px; }}
-      .app-container {{ width: 100%; max-width: 440px; text-align: center; }}
-      .card {{ background: var(--card); border: 1px solid var(--brd); border-radius: 16px; padding: 25px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }}
-      .logo-icon {{ width: 50px; height: 50px; background: #9146ff; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; }}
-      .logo-icon svg {{ width: 30px; height: 30px; fill: white; }}
-      h1 {{ margin: 0 0 5px; font-size: 20px; color: white; }}
-      p {{ color: #8b949e; line-height: 1.4; margin-bottom: 20px; font-size: 0.9rem; }}
-      .btn-main {{ display: block; width: 100%; background: var(--acc); color: white; text-decoration: none; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 1rem; transition: 0.2s; border: none; cursor: pointer; }}
-      .btn-main:hover {{ filter: brightness(1.2); }}
-      .commands-list {{ margin-top: 20px; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--brd); }}
-      .commands-list h3 {{ font-size: 0.95rem; margin: 0 0 12px; color: white; }}
-      .cmd-item {{ margin-bottom: 12px; }}
-      .cmd-item:last-child {{ margin-bottom: 0; }}
-      .cmd-item span {{ display: block; color: #8b949e; margin-bottom: 5px; font-weight: 600; font-size: 0.75rem; }}
-      .copy-row {{ display: flex; gap: 6px; }}
-      code {{ flex-grow: 1; background: #000; color: #f59e0b; padding: 8px; border-radius: 6px; font-size: 0.75rem; word-break: break-all; border: 1px solid #333; }}
-      .btn-copy {{ background: #30363d; border: 1px solid var(--brd); color: white; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }}
-      .setup-guide {{ margin-top: 20px; text-align: left; border-top: 1px solid var(--brd); padding-top: 15px; }}
-      .setup-guide h4 {{ font-size: 0.85rem; color: #fff; margin: 0 0 8px; }}
-      .nota-v {{ margin-top: 15px; background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.2); padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: left; color: #bd93f9; }}
-      .status-box {{ margin-top: 15px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.1); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; }}
-      .dot {{ width: 6px; height: 6px; border-radius: 50%; background: #8b949e; }}
-      .dot.active {{ background: var(--ok); box-shadow: 0 0 8px var(--ok); }}
-      .links {{ margin-top: 15px; font-size: 0.8rem; }}
-      .links a {{ color: var(--acc); text-decoration: none; opacity: 0.8; }}
-    </style>
-  </head>
-  <body>
-    <div class="app-container">
-      <div class="card">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
-        </div>
-        <h1>Twitch</h1>
-        <p>Configurado para el canal: <b>{current_channel}</b></p>
-        
-        <div class="commands-list">
-          <div class="cmd-item">
-            <span>Followage:</span>
-            <div class="copy-row">
-              <code id="cmdFollow">{cmd_follow}</code>
-              <button class="btn-copy" onclick="copy('cmdFollow')">Copiar</button>
-            </div>
-          </div>
-          <div class="cmd-item">
-            <span>Clip:</span>
-            <div class="copy-row">
-              <code id="cmdClip">{cmd_clip}</code>
-              <button class="btn-copy" onclick="copy('cmdClip')">Copiar</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="setup-guide">
-          <h4>Vercel Redirect URI:</h4>
-          <div class="copy-row">
-            <code id="redirUri">{redirect_uri}</code>
-            <button class="btn-copy" onclick="copy('redirUri')">Copiar</button>
-          </div>
-        </div>
-
-        <div class="nota-v">
-            <b>Nota Vercel:</b> Si estás en la nube, pulsa "Vincular", copia el token de la página siguiente y pégalo en tus variables de entorno.
-        </div>
-
-        <div class="status-box">
-          <div class="dot {'active' if is_connected else ''}"></div>
-          <span>{ "Conectado" if is_connected else "Sin vincular" }</span>
-        </div>
-        
-        <a href="{url_for('twitch.login')}" class="btn-main" style="margin-top:15px; background: transparent; border: 1px solid var(--acc); color: var(--acc); font-size: 0.85rem; padding: 8px;">
-           { "Actualizar Conexión" if is_connected else "Vincular Cuenta" }
-        </a>
-      </div>
-      
-      <div class="links">
-        <a href="/">← Volver al Dashboard</a>
-      </div>
-    </div>
-    <script>
-      function copy(id) {{
-        const text = document.getElementById(id).innerText;
-        navigator.clipboard.writeText(text).then(() => {{
-          const btn = event.target;
-          const original = btn.innerText;
-          btn.innerText = "¡OK!";
-          btn.style.background = "#238636";
-          setTimeout(() => {{ btn.innerText = original; btn.style.background = ""; }}, 1500);
-        }});
-      }}
-    </script>
-  </body>
-</html>
+    extra_css = """
+        .card { background: var(--card); border: 1px solid var(--brd); border-radius: 20px; padding: 32px; width: 100%; max-width: 440px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .header { text-align: center; margin-bottom: 24px; }
+        .status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 100px; margin-top: 10px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+        .dot.active { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .section-title { font-size: 0.8rem; font-weight: 700; color: var(--txt-sec); text-transform: uppercase; letter-spacing: 0.5px; margin: 24px 0 12px; }
+        .input-group { margin-bottom: 16px; }
+        input { width: 100%; padding: 12px; background: #09090b; border: 1px solid var(--brd); border-radius: 10px; color: white; font-size: 0.95rem; font-family: inherit; }
+        input:focus { border-color: var(--acc); outline: none; }
+        .bot-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: rgba(255,255,255,0.05); border: 1px solid var(--brd); border-radius: 10px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        .tab.active { background: var(--acc-t); color: white; border-color: var(--acc-t); }
+        .cmd-box { background: #000; border: 1px solid var(--brd); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+        .cmd-label { font-size: 0.7rem; font-weight: 700; color: var(--acc-t); margin-bottom: 8px; }
+        .cmd-row { display: flex; align-items: center; gap: 10px; }
+        code { flex: 1; font-family: monospace; font-size: 0.8rem; color: #facc15; overflow-wrap: anywhere; }
+        .copy-btn { background: var(--brd); border: none; color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; font-weight: 600; min-width: 60px; }
+        .btn-link { display: block; width: 100%; padding: 12px; border-radius: 12px; text-decoration: none; text-align: center; font-weight: 600; font-size: 0.9rem; margin-top: 24px; transition: 0.2s; }
+        .btn-p { background: var(--acc-t); color: white; }
+        .btn-s { border: 1px solid var(--brd); color: var(--txt-sec); }
+        .btn-link:hover { filter: brightness(1.1); transform: translateY(-1px); }
     """
-    return Response(html, mimetype="text/html")
+
+    content = f"""
+    <div class="card">
+        <div class="header">
+            <div style="background: rgba(168, 85, 247, 0.1); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 1px solid var(--brd);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#a855f7"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/></svg>
+            </div>
+            <h1 style="font-size: 1.5rem;">Twitch</h1>
+            <div class="status">
+                <div class="dot {'active' if is_connected else ''}"></div>
+                <span>{ "Conectado" if is_connected else "Sin vincular" }</span>
+            </div>
+        </div>
+
+        <div class="section-title">Canal</div>
+        <div class="input-group">
+            <input type="text" id="chan" value="{current_channel}" placeholder="Tu canal">
+        </div>
+
+        <div class="section-title">Comandos para:</div>
+        <div class="bot-tabs">
+            <div class="tab active" data-bot="nb">Nightbot</div>
+            <div class="tab" data-bot="se">StreamElements</div>
+        </div>
+
+        <div class="cmd-box">
+            <div class="cmd-label">Followage</div>
+            <div class="cmd-row">
+                <code id="c1"></code>
+                <button class="copy-btn" onclick="cp('c1')">Copiar</button>
+            </div>
+        </div>
+        <div class="cmd-box">
+            <div class="cmd-label">Clip</div>
+            <div class="cmd-row">
+                <code id="c2"></code>
+                <button class="copy-btn" onclick="cp('c2')">Copiar</button>
+            </div>
+        </div>
+
+        <a href="{url_for('twitch.login')}" class="btn-link btn-p">
+            { "Reconectar" if is_connected else "Vincular con Twitch" }
+        </a>
+        <a href="/" class="btn-link btn-s">Volver al inicio</a>
+    </div>
+    """
+
+    extra_js = f"""
+    <script>
+        const base = "{base_url}";
+        const inp = document.getElementById('chan');
+        const tabs = document.querySelectorAll('.tab');
+        let bot = 'nb';
+
+        function update() {{
+            const c = inp.value.trim() || 'CANAL';
+            let q1, q2;
+            if (bot === 'nb') {{
+                q1 = "$(urlfetch " + base + "/followage?user=$(touser)&channel=" + c + ")";
+                q2 = "$(urlfetch " + base + "/clip?channel=" + c + ")";
+            }} else {{
+                q1 = "${{readapi " + base + "/followage?user=${{user.name}}&channel=" + c + "}}";
+                q2 = "${{readapi " + base + "/clip?channel=" + c + "}}";
+            }}
+            document.getElementById('c1').innerText = q1;
+            document.getElementById('c2').innerText = q2;
+        }}
+
+        inp.addEventListener('input', update);
+        tabs.forEach(t => t.addEventListener('click', () => {{
+            tabs.forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            bot = t.dataset.bot;
+            update();
+        }}));
+
+        function cp(id) {{
+            const txt = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(txt).then(() => {{
+                const b = event.target;
+                const old = b.innerText;
+                b.innerText = "¡OK!";
+                b.style.background = "#22c55e";
+                setTimeout(() => {{ b.innerText = old; b.style.background = ""; }}, 1000);
+            }});
+        }}
+        update();
+    </script>
+    """
+
+    return Response(get_page_layout("Twitch", content, extra_css, extra_js), mimetype="text/html")

@@ -13,13 +13,12 @@ from common.response import text_response
 from common.http import get_session
 from common.cache import SimpleTTLCache
 
-# --- Twitch Module ---
 twitch_bp = Blueprint('twitch', __name__)
 _session = get_session()
 _cache = SimpleTTLCache(default_ttl=15)
 
-# --- Helpers ---
 def _humanize_duration(delta_seconds: float, lang='es') -> str:
+    # Convierte segundos en un formato legible (años, meses, días, etc.)
     minutes = int(delta_seconds // 60)
     hours = minutes // 60
     days = hours // 24
@@ -58,7 +57,6 @@ def _humanize_duration(delta_seconds: float, lang='es') -> str:
     sep = ", " if lang == 'es' else ", "
     return sep.join(parts)
 
-# --- Routes ---
 @twitch_bp.route('/followage')
 def followage():
     user_login = request.args.get("user", "").strip().lower()
@@ -106,7 +104,6 @@ def followage():
 
 @twitch_bp.route('/token')
 def token():
-    # App access token generation (password required) - Generar token (requiere clave)
     pwd = request.args.get("password") or request.headers.get("X-Endpoint-Password")
     if ENDPOINT_PASSWORD and pwd != ENDPOINT_PASSWORD:
         return text_response("No autorizado.", 401)
@@ -119,23 +116,31 @@ def token():
 
 @twitch_bp.route('/status')
 def status():
-    # Health and token validation - Salud y validación de tokens
-    lines = ["Estado de LosPerris Twitch Api Public", ""]
-    lines.append(f"Canal principal: {CHANNEL_LOGIN or '(no configurado)'}")
-
+    lines = ["Estado de LosPerris Twitch Api Public", "---"]
+    
+    if not CLIENT_ID: lines.append("❌ CLIENT_ID: No configurado")
+    if not CLIENT_SECRET: lines.append("❌ CLIENT_SECRET: No configurado")
+    if not CHANNEL_LOGIN: lines.append("⚠️ CHANNEL_LOGIN: No configurado (usará parámetros de URL)")
+    
     try:
         tok = get_app_token()
         validate_token(tok)
-        lines.append("Token de App: OK")
-    except:
-        lines.append("Token de App: FALLO")
+        lines.append("✅ Conexión con Twitch (App): OK")
+    except Exception as e:
+        lines.append(f"❌ Conexión con Twitch (App): FALLO")
+        lines.append(f"   Detalle: {str(e)[:50]}...")
 
     if USER_ACCESS_TOKEN:
         try:
             validate_token(USER_ACCESS_TOKEN)
-            lines.append("Token de Usuario: OK")
-        except:
-            lines.append("Token de Usuario: FALLO")
+            lines.append("✅ Vinculación de Usuario: OK")
+        except Exception as e:
+            lines.append("❌ Vinculación de Usuario: TOKEN EXPIRADO O INVÁLIDO")
+            lines.append("   Acción: Ve al Dashboard y pulsa 'Actualizar Conexión'.")
+    else:
+        lines.append("⚠️ Vinculación de Usuario: No realizada")
+        lines.append("   Nota: Los clips podrían no funcionar sin esto.")
+        
     return text_response("\n".join(lines))
 
 @twitch_bp.route('/clip', methods=['GET', 'POST'])
@@ -157,7 +162,7 @@ def clip():
 
 @twitch_bp.route('/save-token', methods=['POST'])
 def save_token():
-    # Helper to save the token in the local .env file - Guardar el token en el .env local
+    # Guarda el token de usuario en el .env local para persistencia (solo en local)
     data = request.get_json() or {}
     token = data.get("token", "").strip()
     if not token:
@@ -166,13 +171,11 @@ def save_token():
     env_path = os.path.join(os.getcwd(), '.env')
     
     try:
-        # Read current content - Leer contenido actual
         lines = []
         if os.path.exists(env_path):
             with open(env_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
         
-        # Update or add USER_ACCESS_TOKEN - Actualizar o añadir USER_ACCESS_TOKEN
         found = False
         new_lines = []
         for line in lines:
@@ -195,7 +198,6 @@ def save_token():
 
 @twitch_bp.route('/login')
 def login():
-    # Helper to redirect to Twitch for OAuth - Redirigir a Twitch para OAuth
     if not CLIENT_ID:
         return text_response("Error: CLIENT_ID no configurado en .env", 500)
     redirect_uri = url_for('twitch.oauth_callback', _external=True)
@@ -209,7 +211,6 @@ def login():
         f"&scope={scopes}"
     )
     
-    # Simple HTML to redirect - HTML simple para redirigir
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -224,7 +225,6 @@ def login():
 
 @twitch_bp.route('/callback', methods=['GET', 'POST'])
 def oauth_callback():
-    # Detect if we are running on Vercel - Detectar si estamos en Vercel
     is_vercel = os.environ.get('VERCEL') == '1'
     
     html = f"""
@@ -289,7 +289,6 @@ def oauth_callback():
 
             if(token) {{
                 if(isVercel) {{
-                    // Vercel flow: Show and guide - Flujo Vercel: Mostrar y guiar
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('success').style.display = 'block';
                     document.getElementById('title').innerText = "¡Clave Obtenida!";
@@ -299,7 +298,6 @@ def oauth_callback():
                     document.querySelector('.token-box').style.display = 'block';
                     document.querySelector('.step-guide').style.display = 'block';
                 }} else {{
-                    // Local flow: Auto-save - Flujo Local: Auto-guardado
                     fetch('/twitch/save-token', {{
                         method: 'POST',
                         headers: {{ 'Content-Type': 'application/json' }},

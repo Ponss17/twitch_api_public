@@ -34,7 +34,6 @@ def get_app_token():
     payload = r.json()
     APP_TOKEN = payload.get("access_token")
     expires_in = payload.get("expires_in", 0)
-    # Renueva el token 60s antes de expirar
     APP_TOKEN_EXPIRY = now + int(expires_in) - 60
     return APP_TOKEN
 
@@ -55,9 +54,9 @@ def _headers_user(token: Optional[str] = None):
     }
 
 def create_clip(channel: str, has_delay: bool | None = None, user_token: str | None = None):
-    token_to_use = (user_token or os.environ.get("TWITCH_USER_TOKEN") or "").strip()
+    token_to_use = (user_token or USER_ACCESS_TOKEN or "").strip()
     if not token_to_use:
-        raise RuntimeError("Falta TWITCH_USER_TOKEN con scope 'clips:edit'")
+        raise RuntimeError("Falta USER_ACCESS_TOKEN con scope 'clips:edit' (Vincular en Dashboard)")
     broadcaster_id = get_user_id(channel)
     if not broadcaster_id:
         raise RuntimeError(f"No se pudo resolver el ID del canal '{channel}'")
@@ -106,10 +105,6 @@ def get_follow_info(follower_id: str, channel_id: str):
     return follow
 
 def validate_token(token: str) -> dict:
-    """
-    Valida un token contra https://id.twitch.tv/oauth2/validate
-    Devuelve el JSON con client_id, user_id, expires_in, scopes, etc.
-    """
     url = "https://id.twitch.tv/oauth2/validate"
     headers = {"Authorization": f"Bearer {token}"}
     r = requests.get(url, headers=headers, timeout=10)
