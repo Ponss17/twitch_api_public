@@ -46,4 +46,8 @@ API_KEY = os.environ.get("API_KEY", "")
 - **Robustez:** Reintentos automáticos mediante `common/http.py`.
 
 ---
+## 📝 Notas Importantes
+> [!TIP]
+> **Región de LATAM:** Si tu cuenta no conecta o da error, suele solucionarse cambiando la región a `na` en `valorant/config.py`. 
+
 Parte de **LosPerris Twitch Api Public**

@@ -59,6 +59,12 @@ if ENABLE_VALORANT and os.path.isdir(os.path.join(os.path.dirname(__file__), 'va
     except Exception as e:
         logging.error(f"Error loading Valorant module: {e}")
 
+# --- Favicon ---
+@app.route('/favicon.ico')
+@app.route('/favicon.png')
+def favicon():
+    return app.send_static_file('user/LosPerris-minimal.webp')
+
 # --- Dashboard ---
 @app.route('/')
 def index():

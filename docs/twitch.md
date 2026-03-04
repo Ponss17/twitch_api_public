@@ -61,4 +61,8 @@ Variables que debes configurar en Vercel:
 - `ENDPOINT_PASSWORD`: Contraseña para generar tokens de App.
 
 ---
+## 📝 Notas Importantes
+> [!IMPORTANT]
+> **Vercel / Despliegue:** Una vez vinculado Twitch, recuerda copiar el token que aparece en pantalla y pegalo en tus variables de entorno de Vercel como `USER_ACCESS_TOKEN`. Sin esto, los comandos no funcionarán en la nube.
+
 Parte de **LosPerris Twitch Api Public**
