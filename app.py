@@ -12,7 +12,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # --- Initialization ---
-app = Flask(__name__, static_folder='img', static_url_path='/img')
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'img'), static_url_path='/img')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +33,7 @@ def add_security_headers(resp: Response):
     resp.headers.setdefault('Referrer-Policy', 'no-referrer')
     resp.headers.setdefault(
         'Content-Security-Policy',
-        "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'"
+        "default-src 'self' https:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'"
     )
     return resp
 
@@ -68,10 +68,11 @@ def index():
     if valorant_active:
         v_status = "Habilitado"
         v_dot = "active"
+        valorant_url = url_for('static', filename='valorant/valorant_Icon_purple.webp')
         valorant_card = f"""
         <div class="card service-card">
             <div class="card-header">
-                <img src="/img/valorant/valorant_Icon_purple.webp" alt="Valorant" class="service-icon">
+                <img src="{valorant_url}" alt="Valorant" class="service-icon">
                 <div class="header-text">
                     <h2>Valorant</h2>
                     <p>Estadísticas y rango actual</p>
@@ -96,6 +97,10 @@ def index():
         t_status = "Cuenta vinculada"
         t_dot = "active"
 
+    # Generate URLs for images - Generar URLs para imágenes
+    logo_url = url_for('static', filename='user/LosPerris-minimal.webp')
+    twitch_icon_url = url_for('static', filename='twitch/twitch.webp')
+
     html = f"""
 <!DOCTYPE html>
 <html lang="es">
@@ -103,7 +108,7 @@ def index():
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LosPerris | Dashboard</title>
-    <link rel="icon" type="image/x-icon" href="/img/user/LosPerris-minimal.webp">
+    <link rel="icon" type="image/x-icon" href="{logo_url}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {{
@@ -130,10 +135,10 @@ def index():
         .dot {{ width: 8px; height: 8px; border-radius: 50%; background: var(--txt-sec); }}
         .dot.active {{ background: var(--ok); box-shadow: 0 0 10px var(--ok); }}
         
-        .btn {{ display: block; width: 100%; padding: 14px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 700; font-size: 1rem; transition: 0.2s; color: white; border: none; }}
+        .btn {{ display: block; width: 100%; padding: 14px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 700; font-size: 1rem; transition: 0.2s; color: white; border: none; cursor: pointer; }}
         .btn-twitch {{ background: var(--twt); }}
         .btn-valorant {{ background: var(--val); }}
-        .btn:hover {{ filter: brightness(1.1); }}
+        .btn:hover {{ filter: brightness(1.1); transform: translateY(-1px); }}
         
         .footer {{ margin-top: 50px; text-align: center; font-size: 0.85rem; color: var(--txt-sec); opacity: 0.6; }}
     </style>
@@ -141,7 +146,7 @@ def index():
 <body>
     <div class="container">
         <div class="header">
-            <img src="/img/user/LosPerris-minimal.webp" alt="Logo" class="logo">
+            <img src="{logo_url}" alt="Logo" class="logo">
             <h1>LosPerris</h1>
             <p>Panel de Control Simplificado</p>
         </div>
@@ -150,7 +155,7 @@ def index():
             <!-- Twitch Card -->
             <div class="card">
                 <div class="card-header">
-                    <img src="/img/twitch/twitch.webp" alt="Twitch" class="service-icon">
+                    <img src="{twitch_icon_url}" alt="Twitch" class="service-icon">
                     <div class="header-text">
                         <h2>Twitch</h2>
                         <p>Clips y seguidores</p>
@@ -171,7 +176,7 @@ def index():
         </div>
         
         <div class="footer">
-            <p>&copy; 2024 LosPerris • Simplicidad ante todo ✨</p>
+            <p>&copy; 2026 LosPerris • Simplicidad ante todo ✨</p>
         </div>
     </div>
 </body>
