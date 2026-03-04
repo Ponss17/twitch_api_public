@@ -42,6 +42,7 @@ def twitch_index():
       .btn-copy {{ background: #30363d; border: 1px solid var(--brd); color: white; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }}
       .setup-guide {{ margin-top: 20px; text-align: left; border-top: 1px solid var(--brd); padding-top: 15px; }}
       .setup-guide h4 {{ font-size: 0.85rem; color: #fff; margin: 0 0 8px; }}
+      .nota-v {{ margin-top: 15px; background: rgba(145, 70, 255, 0.1); border: 1px solid rgba(145, 70, 255, 0.2); padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: left; color: #bd93f9; }}
       .status-box {{ margin-top: 15px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.1); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; }}
       .dot {{ width: 6px; height: 6px; border-radius: 50%; background: #8b949e; }}
       .dot.active {{ background: var(--ok); box-shadow: 0 0 8px var(--ok); }}
@@ -81,6 +82,10 @@ def twitch_index():
             <code id="redirUri">{redirect_uri}</code>
             <button class="btn-copy" onclick="copy('redirUri')">Copiar</button>
           </div>
+        </div>
+
+        <div class="nota-v">
+            <b>Nota Vercel:</b> Si estás en la nube, pulsa "Vincular", copia el token de la página siguiente y pégalo en tus variables de entorno.
         </div>
 
         <div class="status-box">

@@ -12,7 +12,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # --- Initialization ---
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'img'), static_url_path='/img')
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'), static_url_path='/static')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 logging.basicConfig(level=logging.INFO)

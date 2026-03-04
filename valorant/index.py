@@ -38,6 +38,7 @@ def valorant_index():
       .btn-copy {{ background: #30363d; border: 1px solid var(--brd); color: white; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; }}
       .status-box {{ margin-top: 20px; padding: 8px; border-radius: 8px; background: rgba(0,0,0,0.1); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 8px; }}
       .dot {{ width: 6px; height: 6px; border-radius: 50%; background: #238636; box-shadow: 0 0 8px #238636; }}
+      .nota-v {{ margin-top: 15px; background: rgba(250, 68, 84, 0.1); border: 1px solid rgba(250, 68, 84, 0.2); padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: left; color: #ff808b; }}
       .links {{ margin-top: 15px; font-size: 0.8rem; }}
       .links a {{ color: var(--acc); text-decoration: none; opacity: 0.8; }}
     </style>
@@ -68,6 +69,10 @@ def valorant_index():
           </div>
         </div>
         
+        <div class="nota-v">
+            <b>Nota:</b> Prueba usar "na" si no te deja con tu cuenta de latam.
+        </div>
+
         <div class="status-box">
           <div class="dot"></div>
           <span>Región: {REGION.upper()} | Jugador: {NOMBRE}</span>

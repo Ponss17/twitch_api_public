@@ -1,4 +1,4 @@
-# <img src="./img/user/LosPerris-minimal.webp" width="40" height="40" style="vertical-align: middle;"> LosPerris Twitch Api Public 
+# <img src="./static/user/LosPerris-minimal.webp" width="40" height="40" style="vertical-align: middle;"> LosPerris Twitch Api Public 
 
 API personalizada de uso público y gestión privada para canales de Twitch. Integración sencilla para comandos de chat, estadísticas de Valorant y herramientas de streaming.
 
